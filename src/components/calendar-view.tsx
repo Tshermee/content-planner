@@ -148,7 +148,7 @@ export function CalendarView() {
                       {dayPosts.map((post) => (
                         <Link
                           key={post.id}
-                          href={`/posts/${post.id}`}
+                          href={`/posts?id=${post.id}`}
                           className="group flex items-start gap-1.5 rounded px-1 py-0.5 transition-colors hover:bg-white/[0.04]"
                         >
                           <span className={`mt-[5px] h-[5px] w-[5px] shrink-0 rounded-full ${STATUS_DOT[post.status]}`} />
@@ -200,7 +200,7 @@ function UnscheduledPosts() {
         {posts.map((post) => (
           <Link
             key={post.id}
-            href={`/posts/${post.id}`}
+            href={`/posts?id=${post.id}`}
             className="flex items-center justify-between rounded px-3 py-2 transition-colors hover:bg-white/[0.03]"
           >
             <span className="text-[14px] text-[#e8e8e8]/80">{post.title}</span>

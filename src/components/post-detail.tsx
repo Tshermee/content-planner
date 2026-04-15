@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import type { Post, Tag } from "@/lib/types";
 import { TagBadge } from "@/components/tag-badge";
@@ -15,8 +15,7 @@ const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
   rejected: { bg: "bg-[#3d2b2b]", text: "text-[#eb5757]" },
 };
 
-export default function PostDetailPage() {
-  const params = useParams<{ id: string }>();
+export function PostDetail({ id }: { id: string }) {
   const router = useRouter();
   const [post, setPost] = useState<Post | null>(null);
   const [editing, setEditing] = useState(false);
@@ -26,11 +25,11 @@ export default function PostDetailPage() {
     const { data } = await supabase
       .from("posts")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
     if (data) setPost(data);
     setLoading(false);
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => {
     fetchPost();
@@ -66,7 +65,6 @@ export default function PostDetailPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
-      {/* Breadcrumb */}
       <button
         onClick={() => router.push("/")}
         className="mb-8 flex items-center gap-1 rounded px-1.5 py-0.5 text-[13px] text-[#9b9a97] hover:bg-white/[0.04] hover:text-[#e8e8e8] transition-colors -ml-1.5"
@@ -76,9 +74,7 @@ export default function PostDetailPage() {
       </button>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_240px]">
-        {/* Main content */}
         <div>
-          {/* Title */}
           <div className="flex items-start justify-between gap-4 mb-4">
             <h1 className="text-[40px] font-bold leading-tight text-[#e8e8e8]">
               {post.title}
@@ -91,7 +87,6 @@ export default function PostDetailPage() {
             </button>
           </div>
 
-          {/* Properties */}
           <div className="mb-8 flex flex-wrap items-center gap-2 text-[13px]">
             <TagBadge tag={post.tag as Tag} />
             <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium ${status.bg} ${status.text}`}>
@@ -111,19 +106,15 @@ export default function PostDetailPage() {
             )}
           </div>
 
-          {/* Divider */}
           <div className="mb-6 border-t border-white/[0.04]" />
 
-          {/* Hint */}
           <p className="mb-4 text-[12px] text-[#9b9a97]/50">
             Select text to leave a comment
           </p>
 
-          {/* Content with inline comments */}
           <InlineComments postId={post.id} content={post.content} />
         </div>
 
-        {/* Sidebar */}
         <aside className="space-y-6 lg:pt-16">
           <ApprovalButtons postId={post.id} />
 

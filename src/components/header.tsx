@@ -39,7 +39,7 @@ export function Header() {
               Calendar
             </Link>
             <Link
-              href="/posts/new"
+              href="/posts?new"
               className="rounded px-2.5 py-1 text-[13px] text-[#9b9a97] hover:bg-white/[0.04] hover:text-[#e8e8e8] transition-colors"
             >
               New Post

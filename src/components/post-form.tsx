@@ -47,14 +47,14 @@ export function PostForm({ post }: PostFormProps) {
 
     if (post) {
       await supabase.from("posts").update(payload).eq("id", post.id);
-      router.push(`/posts/${post.id}`);
+      router.push(`/posts?id=${post.id}`);
     } else {
       const { data } = await supabase
         .from("posts")
         .insert({ ...payload, status: "draft" })
         .select("id")
         .single();
-      if (data) router.push(`/posts/${data.id}`);
+      if (data) router.push(`/posts?id=${data.id}`);
     }
 
     setSaving(false);
