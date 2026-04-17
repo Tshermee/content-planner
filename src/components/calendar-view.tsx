@@ -24,8 +24,9 @@ const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const STATUS_DOT: Record<string, string> = {
   draft: "bg-[#9b9a97]",
-  approved: "bg-[#6c9b7d]",
+  ready: "bg-[#6c9b7d]",
   rejected: "bg-[#eb5757]",
+  posted: "bg-[#529cca]",
 };
 
 export function CalendarView() {

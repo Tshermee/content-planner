@@ -9,10 +9,11 @@ import { ApprovalButtons } from "@/components/approval-buttons";
 import { InlineComments } from "@/components/inline-comments";
 import { PostForm } from "@/components/post-form";
 
-const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
-  draft: { bg: "bg-[#454b4e]", text: "text-[#9b9a97]" },
-  approved: { bg: "bg-[#2b3d33]", text: "text-[#6c9b7d]" },
-  rejected: { bg: "bg-[#3d2b2b]", text: "text-[#eb5757]" },
+const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  draft: { bg: "bg-[#454b4e]", text: "text-[#9b9a97]", label: "Draft" },
+  ready: { bg: "bg-[#2b3d33]", text: "text-[#6c9b7d]", label: "Ready" },
+  rejected: { bg: "bg-[#3d2b2b]", text: "text-[#eb5757]", label: "Rejected" },
+  posted: { bg: "bg-[#2e3c51]", text: "text-[#529cca]", label: "Posted" },
 };
 
 export function PostDetail({ id }: { id: string }) {
@@ -34,6 +35,14 @@ export function PostDetail({ id }: { id: string }) {
   useEffect(() => {
     fetchPost();
   }, [fetchPost]);
+
+  async function markAsPosted() {
+    await supabase
+      .from("posts")
+      .update({ status: "posted", updated_at: new Date().toISOString() })
+      .eq("id", id);
+    fetchPost();
+  }
 
   if (loading) {
     return (
@@ -61,7 +70,7 @@ export function PostDetail({ id }: { id: string }) {
     return <PostForm post={post} />;
   }
 
-  const status = STATUS_STYLE[post.status];
+  const status = STATUS_STYLE[post.status] ?? STATUS_STYLE.draft;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
@@ -75,7 +84,15 @@ export function PostDetail({ id }: { id: string }) {
           Calendar
         </button>
         <div className="flex items-center gap-2">
-          <ApprovalButtons postId={post.id} />
+          {post.status !== "posted" && <ApprovalButtons postId={post.id} />}
+          {post.status === "ready" && (
+            <button
+              onClick={markAsPosted}
+              className="rounded bg-[#2383e2] px-2.5 py-1 text-[12px] font-medium text-white transition-colors hover:bg-[#1b6ec2]"
+            >
+              Mark as posted
+            </button>
+          )}
           <button
             onClick={() => setEditing(true)}
             className="rounded px-2.5 py-1 text-[13px] text-[#9b9a97] hover:bg-white/[0.04] hover:text-[#e8e8e8] transition-colors"
@@ -105,7 +122,7 @@ export function PostDetail({ id }: { id: string }) {
       <div className="mb-6 flex flex-wrap items-center gap-2 text-[13px]">
         <TagBadge tag={post.tag as Tag} />
         <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium ${status.bg} ${status.text}`}>
-          {post.status}
+          {status.label}
         </span>
         {post.scheduled_at && (
           <span className="text-[#9b9a97]">

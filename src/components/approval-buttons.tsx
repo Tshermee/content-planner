@@ -40,7 +40,7 @@ export function ApprovalButtons({ postId }: { postId: string }) {
         allApprovals.length >= 2 && allApprovals.every((a) => a.approved);
       const anyRejected = allApprovals.some((a) => !a.approved);
       const newStatus = allApproved
-        ? "approved"
+        ? "ready"
         : anyRejected
           ? "rejected"
           : "draft";

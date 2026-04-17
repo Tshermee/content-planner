@@ -11,7 +11,7 @@ export const TAGS: Tag[] = [
   "Interner Post",
 ];
 
-export type PostStatus = "draft" | "approved" | "rejected";
+export type PostStatus = "draft" | "ready" | "rejected" | "posted";
 
 export interface Post {
   id: string;

@@ -9,7 +9,8 @@ import { TagBadge } from "@/components/tag-badge";
 const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
   draft: { bg: "bg-[#454b4e]", text: "text-[#9b9a97]" },
   rejected: { bg: "bg-[#3d2b2b]", text: "text-[#eb5757]" },
-  approved: { bg: "bg-[#2b3d33]", text: "text-[#6c9b7d]" },
+  ready: { bg: "bg-[#2b3d33]", text: "text-[#6c9b7d]" },
+  posted: { bg: "bg-[#2e3c51]", text: "text-[#529cca]" },
 };
 
 export default function BacklogPage() {
