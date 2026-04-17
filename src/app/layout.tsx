@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { UserProvider } from "@/lib/user-context";
+import { AuthGate } from "@/components/auth-gate";
 import { Header } from "@/components/header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -19,8 +20,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <UserProvider>
           <TooltipProvider>
-            <Header />
-            <main className="flex-1">{children}</main>
+            <AuthGate>
+              <Header />
+              <main className="flex-1">{children}</main>
+            </AuthGate>
           </TooltipProvider>
         </UserProvider>
       </body>

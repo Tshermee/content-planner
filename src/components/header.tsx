@@ -2,17 +2,11 @@
 
 import Link from "next/link";
 import { useUser } from "@/lib/user-context";
-import { USERS } from "@/lib/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export function Header() {
-  const { user, setUser } = useUser();
+  const { user, displayName, signOut } = useUser();
+
+  if (!user) return null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.04] bg-[#202020]/80 backdrop-blur-md">
@@ -39,6 +33,12 @@ export function Header() {
               Calendar
             </Link>
             <Link
+              href="/backlog"
+              className="rounded px-2.5 py-1 text-[13px] text-[#9b9a97] hover:bg-white/[0.04] hover:text-[#e8e8e8] transition-colors"
+            >
+              Backlog
+            </Link>
+            <Link
               href="/posts?new"
               className="rounded px-2.5 py-1 text-[13px] text-[#9b9a97] hover:bg-white/[0.04] hover:text-[#e8e8e8] transition-colors"
             >
@@ -46,21 +46,15 @@ export function Header() {
             </Link>
           </nav>
         </div>
-        <Select
-          value={user ?? ""}
-          onValueChange={(v) => setUser(v as (typeof USERS)[number])}
-        >
-          <SelectTrigger className="h-7 w-28 border-white/[0.06] bg-transparent text-[13px] text-[#9b9a97] hover:bg-white/[0.04]">
-            <SelectValue placeholder="Who are you?" />
-          </SelectTrigger>
-          <SelectContent className="bg-[#252525] border-white/[0.06]">
-            {USERS.map((u) => (
-              <SelectItem key={u} value={u} className="text-[13px] text-[#e8e8e8] focus:bg-white/[0.04]">
-                {u}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-3">
+          <span className="text-[13px] text-[#9b9a97]">{displayName}</span>
+          <button
+            onClick={signOut}
+            className="rounded px-2 py-0.5 text-[12px] text-[#9b9a97]/60 hover:bg-white/[0.04] hover:text-[#9b9a97] transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </header>
   );

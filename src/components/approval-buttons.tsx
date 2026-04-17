@@ -6,7 +6,7 @@ import { useUser } from "@/lib/user-context";
 import type { Approval } from "@/lib/types";
 
 export function ApprovalButtons({ postId }: { postId: string }) {
-  const { user } = useUser();
+  const { displayName } = useUser();
   const [approvals, setApprovals] = useState<Approval[]>([]);
 
   const fetchApprovals = useCallback(async () => {
@@ -21,12 +21,12 @@ export function ApprovalButtons({ postId }: { postId: string }) {
     fetchApprovals();
   }, [fetchApprovals]);
 
-  const myApproval = approvals.find((a) => a.user_name === user);
+  const myApproval = approvals.find((a) => a.user_name === displayName);
 
   async function vote(approved: boolean) {
-    if (!user) return;
+    if (!displayName) return;
     await supabase.from("approvals").upsert(
-      { post_id: postId, user_name: user, approved },
+      { post_id: postId, user_name: displayName, approved },
       { onConflict: "post_id,user_name" }
     );
 
@@ -78,36 +78,28 @@ export function ApprovalButtons({ postId }: { postId: string }) {
         )}
       </div>
 
-      {user && (
-        <div className="flex gap-1.5">
-          <button
-            className={`rounded px-3 py-1 text-[13px] font-medium transition-colors ${
-              myApproval?.approved === true
-                ? "bg-[#2b3d33] text-[#6c9b7d]"
-                : "bg-white/[0.04] text-[#9b9a97] hover:bg-white/[0.06] hover:text-[#e8e8e8]"
-            }`}
-            onClick={() => vote(true)}
-          >
-            Approve
-          </button>
-          <button
-            className={`rounded px-3 py-1 text-[13px] font-medium transition-colors ${
-              myApproval?.approved === false
-                ? "bg-[#3d2b2b] text-[#eb5757]"
-                : "bg-white/[0.04] text-[#9b9a97] hover:bg-white/[0.06] hover:text-[#e8e8e8]"
-            }`}
-            onClick={() => vote(false)}
-          >
-            Reject
-          </button>
-        </div>
-      )}
-
-      {!user && (
-        <p className="text-[12px] text-[#9b9a97]/50">
-          Pick your name above to vote
-        </p>
-      )}
+      <div className="flex gap-1.5">
+        <button
+          className={`rounded px-3 py-1 text-[13px] font-medium transition-colors ${
+            myApproval?.approved === true
+              ? "bg-[#2b3d33] text-[#6c9b7d]"
+              : "bg-white/[0.04] text-[#9b9a97] hover:bg-white/[0.06] hover:text-[#e8e8e8]"
+          }`}
+          onClick={() => vote(true)}
+        >
+          Approve
+        </button>
+        <button
+          className={`rounded px-3 py-1 text-[13px] font-medium transition-colors ${
+            myApproval?.approved === false
+              ? "bg-[#3d2b2b] text-[#eb5757]"
+              : "bg-white/[0.04] text-[#9b9a97] hover:bg-white/[0.06] hover:text-[#e8e8e8]"
+          }`}
+          onClick={() => vote(false)}
+        >
+          Reject
+        </button>
+      </div>
     </div>
   );
 }

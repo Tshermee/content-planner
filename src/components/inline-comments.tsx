@@ -18,7 +18,7 @@ interface Selection {
 }
 
 export function InlineComments({ postId, content }: InlineCommentsProps) {
-  const { user } = useUser();
+  const { displayName } = useUser();
   const [comments, setComments] = useState<Comment[]>([]);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [newComment, setNewComment] = useState("");
@@ -68,10 +68,10 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
   }
 
   async function addComment() {
-    if (!selection || !newComment.trim() || !user) return;
+    if (!selection || !newComment.trim() || !displayName) return;
     await supabase.from("comments").insert({
       post_id: postId,
-      user_name: user,
+      user_name: displayName,
       body: newComment.trim(),
       selection_start: selection.start,
       selection_end: selection.end,
@@ -148,7 +148,7 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
         </div>
 
         {/* New comment popover */}
-        {selection && user && (
+        {selection && (
           <div
             className="absolute z-10 w-80 rounded-lg border border-white/[0.06] bg-[#252525] p-3 shadow-xl"
             style={{ top: selection.rect.top + 8, left: Math.min(selection.rect.left, 200) }}
@@ -247,7 +247,7 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
         </div>
       )}
 
-      {!user && (
+      {!displayName && (
         <p className="text-[12px] text-[#9b9a97]/50">
           Pick your name in the header to add comments
         </p>

@@ -43,6 +43,3 @@ export interface Comment {
   resolved: boolean;
   created_at: string;
 }
-
-export const USERS = ["Chrigu", "Marco"] as const;
-export type User = (typeof USERS)[number];
