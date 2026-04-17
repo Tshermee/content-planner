@@ -63,7 +63,7 @@ export function PostForm({ post }: PostFormProps) {
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-3xl px-6 py-10">
       {/* Properties bar */}
-      <div className="mb-6 flex flex-wrap items-center gap-3 text-[13px]">
+      <div className="mb-6 flex flex-wrap items-center gap-3 pl-[54px] text-[13px]">
         <div className="flex items-center gap-2">
           <span className="text-[#9b9a97]">Channel</span>
           <Select value={tag} onValueChange={(v) => setTag(v as Tag)}>
@@ -91,20 +91,20 @@ export function PostForm({ post }: PostFormProps) {
         </div>
       </div>
 
-      {/* Title */}
+      {/* Title — aligned with editor content (54px left for BlockNote side menu) */}
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Untitled"
         required
-        className="mb-2 w-full bg-transparent text-[40px] font-bold leading-tight text-[#e8e8e8] placeholder:text-[#9b9a97]/30 outline-none"
+        className="mb-1 w-full bg-transparent pl-[54px] text-[40px] font-bold leading-tight text-[#e8e8e8] placeholder:text-[#9b9a97]/30 outline-none"
       />
 
       {/* Editor */}
       <BlockEditor initialMarkdown={post?.content} onChange={setContent} />
 
       {/* Actions */}
-      <div className="mt-8 flex items-center gap-3">
+      <div className="mt-8 flex items-center gap-3 pl-[54px]">
         <button
           type="submit"
           disabled={saving || !title.trim() || !tag}
