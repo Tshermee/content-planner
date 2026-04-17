@@ -52,6 +52,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       provider: "azure",
       options: {
         scopes: "email profile openid",
+        redirectTo: window.location.origin + (window.location.pathname.split("/").slice(0, 2).join("/") || ""),
       },
     });
   }
