@@ -22,8 +22,6 @@ const MIME_TO_EXT: Record<string, string> = {
 };
 
 async function uploadFile(file: File): Promise<string> {
-  // Determine extension from MIME type first (more reliable for clipboard pastes),
-  // fall back to file name extension
   let ext = MIME_TO_EXT[file.type];
   if (!ext) {
     const parts = file.name.split(".");
@@ -47,17 +45,17 @@ async function uploadFile(file: File): Promise<string> {
   return data.publicUrl;
 }
 
-// Re-upload an external image URL to Supabase storage
-async function reuploadExternalImage(url: string): Promise<string> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return url; // can't fetch, return original
-    const blob = await res.blob();
-    const file = new File([blob], "pasted-image", { type: blob.type });
-    return await uploadFile(file);
-  } catch {
-    return url; // on any error, keep the original URL
+// Extract all image URLs from HTML string
+function extractImageUrls(html: string): string[] {
+  const urls: string[] = [];
+  const regex = /<img[^>]+src=["']([^"']+)["']/gi;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    if (match[1] && !match[1].startsWith("data:image/svg")) {
+      urls.push(match[1]);
+    }
   }
+  return urls;
 }
 
 export function BlockEditor({ initialMarkdown, onChange }: BlockEditorProps) {
@@ -77,46 +75,57 @@ export function BlockEditor({ initialMarkdown, onChange }: BlockEditorProps) {
     })();
   }, [editor, initialMarkdown]);
 
-  // Intercept paste to handle images that come as HTML img references
+  // Intercept paste to handle images copied from webpages
   useEffect(() => {
     const editorEl = document.querySelector(".bn-editor");
     if (!editorEl) return;
 
-    async function handlePaste(e: Event) {
+    function handlePaste(e: Event) {
       const ce = e as ClipboardEvent;
-      const items = ce.clipboardData?.items;
-      if (!items) return;
+      if (!ce.clipboardData) return;
 
-      // Check if clipboard has image files — BlockNote handles these natively via uploadFile
-      for (const item of items) {
-        if (item.type.startsWith("image/") && item.kind === "file") {
-          return; // Let BlockNote handle it
-        }
-      }
+      // If clipboard has an image file, let BlockNote handle it natively
+      const items = Array.from(ce.clipboardData.items);
+      const hasImageFile = items.some(
+        (item) => item.type.startsWith("image/") && item.kind === "file"
+      );
+      if (hasImageFile) return;
 
-      // Check if clipboard has HTML with images (copy image from web)
-      const html = ce.clipboardData?.getData("text/html");
-      if (html) {
-        const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-        if (match && match[1]) {
-          e.preventDefault();
-          const publicUrl = await reuploadExternalImage(match[1]);
+      // Check for HTML with <img> tags (copy image from web)
+      const html = ce.clipboardData.getData("text/html");
+      if (!html) return;
+
+      const imageUrls = extractImageUrls(html);
+      if (imageUrls.length === 0) return;
+
+      // Prevent BlockNote from inserting the alt text / HTML as text
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Insert image blocks with the external URLs directly
+      // (no re-upload — CORS blocks most external fetches)
+      try {
+        const cursor = editor.getTextCursorPosition().block;
+        for (const url of imageUrls) {
           editor.insertBlocks(
-            [{ type: "image", props: { url: publicUrl } }],
-            editor.getTextCursorPosition().block,
+            [{ type: "image", props: { url } }],
+            cursor,
             "after"
           );
-          // Trigger onChange
-          if (onChangeRef.current) {
-            const md = await editor.blocksToMarkdownLossy(editor.document);
-            onChangeRef.current(md);
-          }
         }
+        // Trigger onChange
+        if (onChangeRef.current) {
+          const md = editor.blocksToMarkdownLossy(editor.document);
+          onChangeRef.current(md);
+        }
+      } catch (err) {
+        console.error("Failed to insert pasted image:", err);
       }
     }
 
-    editorEl.addEventListener("paste", handlePaste);
-    return () => editorEl.removeEventListener("paste", handlePaste);
+    // Use capture phase to intercept before BlockNote's handler
+    editorEl.addEventListener("paste", handlePaste, true);
+    return () => editorEl.removeEventListener("paste", handlePaste, true);
   }, [editor]);
 
   return (
