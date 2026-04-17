@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useUser } from "@/lib/user-context";
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
@@ -17,17 +18,18 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-sm space-y-8 px-6">
-          <div className="text-center space-y-2">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.06]">
-              <svg width="24" height="24" viewBox="0 0 18 18" fill="none" className="text-[#e8e8e8]/60">
-                <rect x="2" y="2" width="6" height="6" rx="1" fill="currentColor" />
-                <rect x="10" y="2" width="6" height="6" rx="1" fill="currentColor" opacity="0.5" />
-                <rect x="2" y="10" width="6" height="6" rx="1" fill="currentColor" opacity="0.5" />
-                <rect x="10" y="10" width="6" height="6" rx="1" fill="currentColor" opacity="0.3" />
-              </svg>
+          <div className="flex flex-col items-center space-y-4">
+            <Image
+              src="/content-planner/bossinfo-logo.svg"
+              alt="Boss Info"
+              width={160}
+              height={35}
+              className="brightness-0 invert opacity-80"
+            />
+            <div className="text-center space-y-1">
+              <h1 className="text-xl font-semibold text-[#e8e8e8]">AI Content Planner</h1>
+              <p className="text-[13px] text-[#9b9a97]">Sign in to continue</p>
             </div>
-            <h1 className="text-xl font-semibold text-[#e8e8e8]">Content Planner</h1>
-            <p className="text-[13px] text-[#9b9a97]">Sign in to continue</p>
           </div>
 
           <button

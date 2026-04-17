@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useUser } from "@/lib/user-context";
 
@@ -14,15 +15,17 @@ export function Header() {
         <div className="flex items-center gap-5">
           <Link
             href="/"
-            className="flex items-center gap-2 text-sm font-medium text-[#e8e8e8]/80 hover:text-[#e8e8e8] transition-colors"
+            className="flex items-center gap-2.5 text-sm font-medium text-[#e8e8e8]/80 hover:text-[#e8e8e8] transition-colors"
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="opacity-70">
-              <rect x="2" y="2" width="6" height="6" rx="1" fill="currentColor" />
-              <rect x="10" y="2" width="6" height="6" rx="1" fill="currentColor" opacity="0.5" />
-              <rect x="2" y="10" width="6" height="6" rx="1" fill="currentColor" opacity="0.5" />
-              <rect x="10" y="10" width="6" height="6" rx="1" fill="currentColor" opacity="0.3" />
-            </svg>
-            Content Planner
+            <Image
+              src="/content-planner/bossinfo-logo.svg"
+              alt="Boss Info"
+              width={80}
+              height={18}
+              className="brightness-0 invert opacity-70"
+            />
+            <span className="text-white/[0.15]">|</span>
+            <span className="text-[13px]">AI Content Planner</span>
           </Link>
           <span className="text-white/[0.08]">/</span>
           <nav className="flex items-center gap-0.5">

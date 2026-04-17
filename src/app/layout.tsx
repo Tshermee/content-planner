@@ -6,8 +6,8 @@ import { Header } from "@/components/header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
-  title: "Content Planner",
-  description: "Plan and review content posts",
+  title: "AI Content Planner | Boss Info",
+  description: "Notion-style content planning tool by Boss Info",
 };
 
 export default function RootLayout({

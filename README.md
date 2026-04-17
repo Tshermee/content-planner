@@ -1,6 +1,6 @@
-# Content Planner
+# AI Content Planner
 
-A Notion-style content planning tool for scheduling and reviewing social media posts. Built with Next.js and Supabase.
+A Notion-style content planning tool by Boss Info for scheduling and reviewing social media posts. Built with Next.js and Supabase.
 
 **Live:** [https://tshermee.github.io/content-planner](https://tshermee.github.io/content-planner)
 
