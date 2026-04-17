@@ -16,11 +16,9 @@ interface Selection {
   start: number;
   end: number;
   text: string;
-  rect: { top: number; left: number };
+  top: number; // Y offset relative to content container
 }
 
-// Inject <mark> tags into raw markdown at comment offset positions.
-// react-markdown + rehype-raw renders these as highlighted spans.
 function injectHighlights(
   content: string,
   comments: Comment[],
@@ -63,6 +61,7 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [newComment, setNewComment] = useState("");
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
+  const [markPositions, setMarkPositions] = useState<Record<string, number>>({});
   const contentRef = useRef<HTMLDivElement>(null);
 
   const fetchComments = useCallback(async () => {
@@ -79,7 +78,24 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
     fetchComments();
   }, [fetchComments]);
 
-  // Handle clicks on <mark> elements to activate comments
+  // After render, measure the Y position of each <mark> element
+  useEffect(() => {
+    if (!contentRef.current || comments.length === 0) return;
+
+    const positions: Record<string, number> = {};
+    const container = contentRef.current;
+    const containerTop = container.getBoundingClientRect().top;
+
+    container.querySelectorAll("[data-comment-id]").forEach((el) => {
+      const id = el.getAttribute("data-comment-id");
+      if (id) {
+        positions[id] = el.getBoundingClientRect().top - containerTop;
+      }
+    });
+
+    setMarkPositions(positions);
+  }, [comments, activeCommentId, content]);
+
   function handleContentClick(e: React.MouseEvent) {
     const target = e.target as HTMLElement;
     const mark = target.closest("[data-comment-id]");
@@ -93,7 +109,6 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || !contentRef.current) return;
 
-    // Ignore selection inside the comment popover
     const range = sel.getRangeAt(0);
     const container = contentRef.current;
     if (!container.contains(range.startContainer)) return;
@@ -112,10 +127,7 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
       start,
       end,
       text,
-      rect: {
-        top: rect.bottom - containerRect.top,
-        left: rect.left - containerRect.left,
-      },
+      top: rect.top - containerRect.top,
     });
   }
 
@@ -140,15 +152,29 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
       .from("comments")
       .update({ resolved: true })
       .eq("id", commentId);
+    if (activeCommentId === commentId) setActiveCommentId(null);
     fetchComments();
   }
 
   const highlighted = injectHighlights(content, comments, activeCommentId);
-  const activeComment = comments.find((c) => c.id === activeCommentId);
+
+  // Stack comment cards so they don't overlap (min 8px gap)
+  const sortedComments = [...comments].sort(
+    (a, b) => a.selection_start - b.selection_start
+  );
+  const commentTops: Record<string, number> = {};
+  let lastBottom = 0;
+  for (const c of sortedComments) {
+    const naturalTop = markPositions[c.id] ?? 0;
+    const top = Math.max(naturalTop, lastBottom);
+    commentTops[c.id] = top;
+    lastBottom = top + 80; // estimated card height + gap
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="relative">
+    <div className="relative flex gap-6">
+      {/* Content column */}
+      <div className="min-w-0 flex-1">
         <div
           ref={contentRef}
           onMouseUp={handleMouseUp}
@@ -159,30 +185,63 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
             {highlighted}
           </ReactMarkdown>
         </div>
+      </div>
 
-        {/* New comment popover */}
+      {/* Right sidebar for comments */}
+      <div className="relative hidden w-[280px] shrink-0 lg:block">
+        {/* Existing comments, positioned at the height of their highlight */}
+        {sortedComments.map((c) => (
+          <div
+            key={c.id}
+            className={`absolute left-0 right-0 rounded-lg border px-3 py-2 text-[12px] transition-all duration-150 cursor-pointer ${
+              activeCommentId === c.id
+                ? "border-[#cc8f42]/30 bg-[#cc8f42]/5"
+                : "border-white/[0.04] bg-white/[0.02] hover:border-white/[0.08]"
+            }`}
+            style={{ top: commentTops[c.id] ?? 0 }}
+            onClick={() =>
+              setActiveCommentId(activeCommentId === c.id ? null : c.id)
+            }
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-medium text-[#e8e8e8]">{c.user_name}</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  resolveComment(c.id);
+                }}
+                className="text-[11px] text-[#9b9a97]/40 hover:text-[#9b9a97] transition-colors"
+              >
+                Resolve
+              </button>
+            </div>
+            <p className="text-[#e8e8e8]/70 leading-relaxed">{c.body}</p>
+          </div>
+        ))}
+
+        {/* New comment input, positioned at selection height */}
         {selection && (
           <div
-            className="absolute z-10 w-80 rounded-lg border border-white/[0.06] bg-[#252525] p-3 shadow-xl"
-            style={{ top: selection.rect.top + 8, left: Math.min(selection.rect.left, 200) }}
+            className="absolute left-0 right-0 rounded-lg border border-[#2383e2]/30 bg-[#252525] p-3 shadow-xl z-10"
+            style={{ top: selection.top }}
           >
-            <div className="mb-2.5 rounded bg-white/[0.03] px-2.5 py-1.5 text-[12px] text-[#9b9a97] leading-relaxed">
-              &ldquo;{selection.text.slice(0, 80)}
-              {selection.text.length > 80 ? "..." : ""}&rdquo;
+            <div className="mb-2 rounded bg-white/[0.03] px-2 py-1 text-[11px] text-[#9b9a97] leading-relaxed truncate">
+              &ldquo;{selection.text.slice(0, 60)}
+              {selection.text.length > 60 ? "..." : ""}&rdquo;
             </div>
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Leave a comment..."
               rows={2}
-              className="mb-2.5 w-full resize-none rounded border border-white/[0.06] bg-white/[0.03] px-2.5 py-1.5 text-[13px] text-[#e8e8e8] placeholder:text-[#9b9a97]/40 outline-none focus:border-white/[0.12]"
+              className="mb-2 w-full resize-none rounded border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[12px] text-[#e8e8e8] placeholder:text-[#9b9a97]/40 outline-none focus:border-white/[0.12]"
               autoFocus
             />
             <div className="flex gap-2">
               <button
                 onClick={addComment}
                 disabled={!newComment.trim()}
-                className="rounded bg-[#2383e2] px-3 py-1 text-[12px] font-medium text-white transition-colors hover:bg-[#1b6ec2] disabled:opacity-40"
+                className="rounded bg-[#2383e2] px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-[#1b6ec2] disabled:opacity-40"
               >
                 Comment
               </button>
@@ -191,7 +250,7 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
                   setSelection(null);
                   window.getSelection()?.removeAllRanges();
                 }}
-                className="rounded px-3 py-1 text-[12px] text-[#9b9a97] transition-colors hover:bg-white/[0.04]"
+                className="rounded px-2.5 py-1 text-[11px] text-[#9b9a97] transition-colors hover:bg-white/[0.04]"
               >
                 Cancel
               </button>
@@ -199,72 +258,6 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
           </div>
         )}
       </div>
-
-      {/* Active comment detail */}
-      {activeComment && (
-        <div className="rounded-lg border-l-2 border-l-[#cc8f42]/50 bg-white/[0.02] px-4 py-3">
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-[13px] font-medium text-[#e8e8e8]">
-              {activeComment.user_name}
-            </span>
-            <span className="text-[11px] text-[#9b9a97]/60">
-              {new Date(activeComment.created_at).toLocaleString()}
-            </span>
-          </div>
-          <div className="mb-2 text-[12px] italic text-[#9b9a97]/60">
-            &ldquo;{activeComment.selected_text.slice(0, 100)}
-            {activeComment.selected_text.length > 100 ? "..." : ""}&rdquo;
-          </div>
-          <p className="text-[14px] leading-relaxed text-[#e8e8e8]/80">
-            {activeComment.body}
-          </p>
-          <button
-            onClick={() => resolveComment(activeComment.id)}
-            className="mt-3 rounded px-2 py-0.5 text-[12px] text-[#9b9a97] transition-colors hover:bg-white/[0.04] hover:text-[#e8e8e8]"
-          >
-            Resolve
-          </button>
-        </div>
-      )}
-
-      {/* Comments list */}
-      {comments.length > 0 && (
-        <div className="space-y-1 pt-2">
-          <h3 className="mb-2 text-[11px] font-medium uppercase tracking-widest text-[#9b9a97]/60">
-            Comments ({comments.length})
-          </h3>
-          {comments.map((c) => (
-            <div
-              key={c.id}
-              className={`cursor-pointer rounded-lg px-3 py-2.5 text-[13px] transition-all duration-150 ${
-                activeCommentId === c.id
-                  ? "bg-white/[0.04]"
-                  : "hover:bg-white/[0.02]"
-              }`}
-              onClick={() =>
-                setActiveCommentId(activeCommentId === c.id ? null : c.id)
-              }
-            >
-              <div className="flex items-center justify-between mb-0.5">
-                <span className="font-medium text-[#e8e8e8]">{c.user_name}</span>
-                <span className="text-[11px] text-[#9b9a97]/50">
-                  {new Date(c.created_at).toLocaleString()}
-                </span>
-              </div>
-              <div className="text-[12px] italic text-[#9b9a97]/50 truncate mb-0.5">
-                &ldquo;{c.selected_text}&rdquo;
-              </div>
-              <p className="text-[#e8e8e8]/70">{c.body}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!displayName && (
-        <p className="text-[12px] text-[#9b9a97]/50">
-          Pick your name in the header to add comments
-        </p>
-      )}
     </div>
   );
 }

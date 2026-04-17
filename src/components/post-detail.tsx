@@ -64,71 +64,24 @@ export function PostDetail({ id }: { id: string }) {
   const status = STATUS_STYLE[post.status];
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
-      <button
-        onClick={() => router.push("/")}
-        className="mb-8 flex items-center gap-1 rounded px-1.5 py-0.5 text-[13px] text-[#9b9a97] hover:bg-white/[0.04] hover:text-[#e8e8e8] transition-colors -ml-1.5"
-      >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        Calendar
-      </button>
-
-      <div className="grid gap-10 lg:grid-cols-[1fr_240px]">
-        <div>
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <h1 className="text-[40px] font-bold leading-tight text-[#e8e8e8]">
-              {post.title}
-            </h1>
-            <button
-              onClick={() => setEditing(true)}
-              className="mt-2 shrink-0 rounded px-2.5 py-1 text-[13px] text-[#9b9a97] hover:bg-white/[0.04] hover:text-[#e8e8e8] transition-colors"
-            >
-              Edit
-            </button>
-          </div>
-
-          <div className="mb-8 flex flex-wrap items-center gap-2 text-[13px]">
-            <TagBadge tag={post.tag as Tag} />
-            <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium ${status.bg} ${status.text}`}>
-              {post.status}
-            </span>
-            {post.scheduled_at && (
-              <span className="text-[#9b9a97]">
-                {new Date(post.scheduled_at).toLocaleDateString("de-CH", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            )}
-          </div>
-
-          <div className="mb-6 border-t border-white/[0.04]" />
-
-          <p className="mb-4 text-[12px] text-[#9b9a97]/50">
-            Select text to leave a comment
-          </p>
-
-          <InlineComments postId={post.id} content={post.content} />
-        </div>
-
-        <aside className="space-y-6 lg:pt-16">
+    <div className="mx-auto max-w-6xl px-6 py-10">
+      {/* Top bar */}
+      <div className="mb-6 flex items-center justify-between">
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[13px] text-[#9b9a97] hover:bg-white/[0.04] hover:text-[#e8e8e8] transition-colors -ml-1.5"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Calendar
+        </button>
+        <div className="flex items-center gap-2">
           <ApprovalButtons postId={post.id} />
-
-          <div className="space-y-2 text-[12px] text-[#9b9a97]/50">
-            <div className="flex justify-between">
-              <span>Created</span>
-              <span>{new Date(post.created_at).toLocaleDateString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Updated</span>
-              <span>{new Date(post.updated_at).toLocaleDateString()}</span>
-            </div>
-          </div>
-
+          <button
+            onClick={() => setEditing(true)}
+            className="rounded px-2.5 py-1 text-[13px] text-[#9b9a97] hover:bg-white/[0.04] hover:text-[#e8e8e8] transition-colors"
+          >
+            Edit
+          </button>
           <button
             onClick={async () => {
               if (confirm("Delete this post?")) {
@@ -136,12 +89,46 @@ export function PostDetail({ id }: { id: string }) {
                 router.push("/");
               }
             }}
-            className="w-full rounded px-3 py-1.5 text-[13px] text-[#eb5757]/70 transition-colors hover:bg-[#3d2b2b] hover:text-[#eb5757]"
+            className="rounded px-2.5 py-1 text-[13px] text-[#eb5757]/70 transition-colors hover:bg-[#3d2b2b] hover:text-[#eb5757]"
           >
-            Delete post
+            Delete
           </button>
-        </aside>
+        </div>
       </div>
+
+      {/* Title */}
+      <h1 className="text-[40px] font-bold leading-tight text-[#e8e8e8] mb-3">
+        {post.title}
+      </h1>
+
+      {/* Properties */}
+      <div className="mb-6 flex flex-wrap items-center gap-2 text-[13px]">
+        <TagBadge tag={post.tag as Tag} />
+        <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium ${status.bg} ${status.text}`}>
+          {post.status}
+        </span>
+        {post.scheduled_at && (
+          <span className="text-[#9b9a97]">
+            {new Date(post.scheduled_at).toLocaleDateString("de-CH", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+        )}
+        <span className="text-[#9b9a97]/40">|</span>
+        <span className="text-[11px] text-[#9b9a97]/40">
+          Select text to comment
+        </span>
+      </div>
+
+      <div className="border-t border-white/[0.04] mb-6" />
+
+      {/* Content + comments sidebar */}
+      <InlineComments postId={post.id} content={post.content} />
     </div>
   );
 }

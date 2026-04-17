@@ -54,52 +54,44 @@ export function ApprovalButtons({ postId }: { postId: string }) {
   }
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-[11px] font-medium uppercase tracking-widest text-[#9b9a97]/60">
-        Approvals
-      </h3>
-
-      <div className="space-y-1">
-        {approvals.map((a) => (
-          <div
+    <div className="flex items-center gap-1.5">
+      {/* Other users' votes */}
+      {approvals
+        .filter((a) => a.user_name !== displayName)
+        .map((a) => (
+          <span
             key={a.id}
-            className={`flex items-center gap-2 rounded px-2.5 py-1.5 text-[13px] ${
+            className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[12px] ${
               a.approved
                 ? "bg-[#2b3d33] text-[#6c9b7d]"
                 : "bg-[#3d2b2b] text-[#eb5757]"
             }`}
           >
-            <span>{a.approved ? "\u2713" : "\u2717"}</span>
-            <span className="font-medium">{a.user_name}</span>
-          </div>
+            {a.approved ? "\u2713" : "\u2717"} {a.user_name}
+          </span>
         ))}
-        {approvals.length === 0 && (
-          <p className="text-[13px] text-[#9b9a97]/60">No votes yet</p>
-        )}
-      </div>
 
-      <div className="flex gap-1.5">
-        <button
-          className={`rounded px-3 py-1 text-[13px] font-medium transition-colors ${
-            myApproval?.approved === true
-              ? "bg-[#2b3d33] text-[#6c9b7d]"
-              : "bg-white/[0.04] text-[#9b9a97] hover:bg-white/[0.06] hover:text-[#e8e8e8]"
-          }`}
-          onClick={() => vote(true)}
-        >
-          Approve
-        </button>
-        <button
-          className={`rounded px-3 py-1 text-[13px] font-medium transition-colors ${
-            myApproval?.approved === false
-              ? "bg-[#3d2b2b] text-[#eb5757]"
-              : "bg-white/[0.04] text-[#9b9a97] hover:bg-white/[0.06] hover:text-[#e8e8e8]"
-          }`}
-          onClick={() => vote(false)}
-        >
-          Reject
-        </button>
-      </div>
+      {/* My vote buttons */}
+      <button
+        className={`rounded px-2 py-1 text-[12px] font-medium transition-colors ${
+          myApproval?.approved === true
+            ? "bg-[#2b3d33] text-[#6c9b7d]"
+            : "bg-white/[0.04] text-[#9b9a97] hover:bg-white/[0.06] hover:text-[#e8e8e8]"
+        }`}
+        onClick={() => vote(true)}
+      >
+        {myApproval?.approved === true ? "\u2713 " : ""}Approve
+      </button>
+      <button
+        className={`rounded px-2 py-1 text-[12px] font-medium transition-colors ${
+          myApproval?.approved === false
+            ? "bg-[#3d2b2b] text-[#eb5757]"
+            : "bg-white/[0.04] text-[#9b9a97] hover:bg-white/[0.06] hover:text-[#e8e8e8]"
+        }`}
+        onClick={() => vote(false)}
+      >
+        {myApproval?.approved === false ? "\u2717 " : ""}Reject
+      </button>
     </div>
   );
 }
