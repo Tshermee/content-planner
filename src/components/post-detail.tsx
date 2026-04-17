@@ -84,7 +84,7 @@ export function PostDetail({ id }: { id: string }) {
           Calendar
         </button>
         <div className="flex items-center gap-2">
-          {post.status !== "posted" && <ApprovalButtons postId={post.id} />}
+          {post.status !== "posted" && <ApprovalButtons postId={post.id} onStatusChange={fetchPost} />}
           {post.status === "ready" && (
             <button
               onClick={markAsPosted}

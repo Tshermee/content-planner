@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useUser } from "@/lib/user-context";
 import type { Approval } from "@/lib/types";
 
-export function ApprovalButtons({ postId }: { postId: string }) {
+export function ApprovalButtons({ postId, onStatusChange }: { postId: string; onStatusChange?: () => void }) {
   const { displayName } = useUser();
   const [approvals, setApprovals] = useState<Approval[]>([]);
 
@@ -50,6 +50,7 @@ export function ApprovalButtons({ postId }: { postId: string }) {
     }
 
     fetchApprovals();
+    onStatusChange?.();
   }
 
   return (
