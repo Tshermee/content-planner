@@ -118,6 +118,125 @@
   background: rgba(255, 255, 255, 0.18);
 }
 
+/* Notion-style prose for rendered markdown in post view */
+.prose-notion {
+  color: rgba(232, 232, 232, 0.9);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.prose-notion h1 {
+  font-size: 1.875em;
+  font-weight: 700;
+  margin-top: 2em;
+  margin-bottom: 0.25em;
+  color: #e8e8e8;
+  line-height: 1.3;
+}
+.prose-notion h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.25em;
+  color: #e8e8e8;
+  line-height: 1.3;
+}
+.prose-notion h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin-top: 1.25em;
+  margin-bottom: 0.25em;
+  color: #e8e8e8;
+  line-height: 1.4;
+}
+.prose-notion p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+.prose-notion strong {
+  color: #e8e8e8;
+  font-weight: 600;
+}
+.prose-notion em {
+  font-style: italic;
+}
+.prose-notion ul, .prose-notion ol {
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+.prose-notion ul {
+  list-style-type: disc;
+}
+.prose-notion ol {
+  list-style-type: decimal;
+}
+.prose-notion li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+.prose-notion blockquote {
+  border-left: 3px solid rgba(255, 255, 255, 0.1);
+  padding-left: 1em;
+  color: rgba(155, 154, 151, 0.8);
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+.prose-notion code {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.15em 0.35em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+.prose-notion pre {
+  background: #202020;
+  border-radius: 4px;
+  padding: 1em;
+  overflow-x: auto;
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+.prose-notion pre code {
+  background: none;
+  padding: 0;
+}
+.prose-notion a {
+  color: #529cca;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-notion hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 1.5em 0;
+}
+.prose-notion img {
+  max-width: 100%;
+  border-radius: 4px;
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+.prose-notion > :first-child {
+  margin-top: 0;
+}
+
+/* Comment highlight styles */
+.comment-highlight {
+  background: rgba(204, 143, 66, 0.15);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.15s;
+}
+.comment-highlight:hover {
+  background: rgba(204, 143, 66, 0.25);
+}
+.comment-active {
+  background: rgba(204, 143, 66, 0.3);
+  text-decoration: underline;
+  text-decoration-color: rgba(204, 143, 66, 0.5);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
 /* Override BlockNote editor for dark mode */
 .bn-container {
   --bn-colors-editor-background: #202020 !important;

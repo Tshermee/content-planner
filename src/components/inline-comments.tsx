@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@/lib/user-context";
 import type { Comment } from "@/lib/types";
@@ -15,6 +17,44 @@ interface Selection {
   end: number;
   text: string;
   rect: { top: number; left: number };
+}
+
+// Inject <mark> tags into raw markdown at comment offset positions.
+// react-markdown + rehype-raw renders these as highlighted spans.
+function injectHighlights(
+  content: string,
+  comments: Comment[],
+  activeCommentId: string | null
+): string {
+  if (comments.length === 0) return content;
+
+  const sorted = [...comments].sort(
+    (a, b) => a.selection_start - b.selection_start
+  );
+
+  let result = "";
+  let lastIndex = 0;
+
+  for (const comment of sorted) {
+    if (comment.selection_start < lastIndex) continue;
+    if (comment.selection_end > content.length) continue;
+
+    result += content.slice(lastIndex, comment.selection_start);
+
+    const isActive = comment.id === activeCommentId;
+    const cls = isActive
+      ? "comment-highlight comment-active"
+      : "comment-highlight";
+
+    result += `<mark class="${cls}" data-comment-id="${comment.id}">`;
+    result += content.slice(comment.selection_start, comment.selection_end);
+    result += "</mark>";
+
+    lastIndex = comment.selection_end;
+  }
+
+  result += content.slice(lastIndex);
+  return result;
 }
 
 export function InlineComments({ postId, content }: InlineCommentsProps) {
@@ -39,12 +79,24 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
     fetchComments();
   }, [fetchComments]);
 
+  // Handle clicks on <mark> elements to activate comments
+  function handleContentClick(e: React.MouseEvent) {
+    const target = e.target as HTMLElement;
+    const mark = target.closest("[data-comment-id]");
+    if (mark) {
+      const id = mark.getAttribute("data-comment-id");
+      setActiveCommentId(activeCommentId === id ? null : id);
+    }
+  }
+
   function handleMouseUp() {
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || !contentRef.current) return;
 
+    // Ignore selection inside the comment popover
     const range = sel.getRangeAt(0);
     const container = contentRef.current;
+    if (!container.contains(range.startContainer)) return;
 
     const preRange = document.createRange();
     preRange.selectNodeContents(container);
@@ -91,49 +143,7 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
     fetchComments();
   }
 
-  function renderContent() {
-    if (comments.length === 0) return content;
-
-    const sorted = [...comments].sort(
-      (a, b) => a.selection_start - b.selection_start
-    );
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-
-    for (const comment of sorted) {
-      if (comment.selection_start < lastIndex) continue;
-
-      if (comment.selection_start > lastIndex) {
-        parts.push(content.slice(lastIndex, comment.selection_start));
-      }
-
-      const isActive = activeCommentId === comment.id;
-      parts.push(
-        <mark
-          key={comment.id}
-          className={`cursor-pointer rounded-sm transition-all duration-150 ${
-            isActive
-              ? "bg-[#cc8f42]/30 underline decoration-[#cc8f42]/50 decoration-2 underline-offset-2"
-              : "bg-[#cc8f42]/15 hover:bg-[#cc8f42]/25"
-          }`}
-          onClick={(e) => {
-            e.stopPropagation();
-            setActiveCommentId(isActive ? null : comment.id);
-          }}
-        >
-          {content.slice(comment.selection_start, comment.selection_end)}
-        </mark>
-      );
-      lastIndex = comment.selection_end;
-    }
-
-    if (lastIndex < content.length) {
-      parts.push(content.slice(lastIndex));
-    }
-
-    return parts;
-  }
-
+  const highlighted = injectHighlights(content, comments, activeCommentId);
   const activeComment = comments.find((c) => c.id === activeCommentId);
 
   return (
@@ -142,9 +152,12 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
         <div
           ref={contentRef}
           onMouseUp={handleMouseUp}
-          className="min-h-[200px] whitespace-pre-wrap text-[15px] leading-[1.7] text-[#e8e8e8]/90 cursor-text select-text"
+          onClick={handleContentClick}
+          className="prose-notion min-h-[200px] cursor-text select-text"
         >
-          {renderContent()}
+          <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+            {highlighted}
+          </ReactMarkdown>
         </div>
 
         {/* New comment popover */}
