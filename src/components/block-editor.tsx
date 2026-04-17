@@ -15,7 +15,10 @@ async function uploadFile(file: File): Promise<string> {
   const ext = file.name.split(".").pop() || "bin";
   const path = `${crypto.randomUUID()}.${ext}`;
 
-  const { error } = await supabase.storage.from("media").upload(path, file);
+  const { error } = await supabase.storage.from("media").upload(path, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
   if (error) throw error;
 
   const { data } = supabase.storage.from("media").getPublicUrl(path);
@@ -40,7 +43,7 @@ export function BlockEditor({ initialMarkdown, onChange }: BlockEditorProps) {
   }, [editor, initialMarkdown]);
 
   return (
-    <div className="bn-dark-theme [&_.bn-editor]:min-h-[300px] [&_.bn-container]:bg-transparent [&_.bn-editor]:!bg-transparent [&_.bn-editor]:text-[#e8e8e8] [&_.bn-block-content]:text-[15px] [&_.bn-block-content]:leading-relaxed [&_.bn-side-menu]:!left-0">
+    <div className="bn-dark-theme [&_.bn-editor]:min-h-[300px] [&_.bn-container]:bg-transparent [&_.bn-editor]:!bg-transparent [&_.bn-editor]:text-[#e8e8e8] [&_.bn-block-content]:text-[15px] [&_.bn-block-content]:leading-relaxed [&_.bn-inline-content]:text-[15px]">
       <BlockNoteView
         editor={editor}
         theme="dark"

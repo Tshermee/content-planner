@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -20,6 +20,34 @@ const BlockEditor = dynamic(
 
 interface PostFormProps {
   post?: Post;
+}
+
+function AutoResizeTextarea({
+  value,
+  onChange,
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.style.height = "auto";
+      ref.current.style.height = ref.current.scrollHeight + "px";
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={onChange}
+      rows={1}
+      {...props}
+    />
+  );
 }
 
 export function PostForm({ post }: PostFormProps) {
@@ -61,9 +89,9 @@ export function PostForm({ post }: PostFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-3xl px-6 py-10">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-5xl px-6 py-10">
       {/* Properties bar */}
-      <div className="mb-6 flex flex-wrap items-center gap-3 pl-[54px] text-[13px]">
+      <div className="mb-6 flex flex-wrap items-center gap-3 text-[13px]">
         <div className="flex items-center gap-2">
           <span className="text-[#9b9a97]">Channel</span>
           <Select value={tag} onValueChange={(v) => setTag(v as Tag)}>
@@ -91,20 +119,23 @@ export function PostForm({ post }: PostFormProps) {
         </div>
       </div>
 
-      {/* Title — aligned with editor content (54px left for BlockNote side menu) */}
-      <input
+      {/* Title — auto-resizing textarea so long titles wrap */}
+      <AutoResizeTextarea
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Untitled"
         required
-        className="mb-1 w-full bg-transparent pl-[54px] text-[40px] font-bold leading-tight text-[#e8e8e8] placeholder:text-[#9b9a97]/30 outline-none"
+        className="mb-1 w-full resize-none overflow-hidden bg-transparent text-[40px] font-bold leading-tight text-[#e8e8e8] placeholder:text-[#9b9a97]/30 outline-none"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.preventDefault();
+        }}
       />
 
       {/* Editor */}
       <BlockEditor initialMarkdown={post?.content} onChange={setContent} />
 
       {/* Actions */}
-      <div className="mt-8 flex items-center gap-3 pl-[54px]">
+      <div className="mt-8 flex items-center gap-3">
         <button
           type="submit"
           disabled={saving || !title.trim() || !tag}
