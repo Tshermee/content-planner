@@ -90,32 +90,51 @@ export function PostForm({ post }: PostFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-5xl px-6 py-10">
-      {/* Properties bar — 54px matches BlockNote's padding-inline */}
-      <div className="mb-6 flex flex-wrap items-center gap-3 pl-[54px] text-[13px]">
-        <div className="flex items-center gap-2">
-          <span className="text-[#9b9a97]">Channel</span>
-          <Select value={tag} onValueChange={(v) => setTag(v as Tag)}>
-            <SelectTrigger className="h-7 w-44 border-white/[0.06] bg-white/[0.03] text-[13px] text-[#e8e8e8]">
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent className="bg-[#252525] border-white/[0.06]">
-              {TAGS.map((t) => (
-                <SelectItem key={t} value={t} className="text-[13px] text-[#e8e8e8] focus:bg-white/[0.04]">
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Sticky top bar with properties + save */}
+      <div className="sticky top-11 z-40 -mx-6 mb-6 border-b border-white/[0.04] bg-[#191919]/90 backdrop-blur-md px-6 py-2">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 pl-[54px] text-[13px]">
+          <div className="flex items-center gap-2">
+            <span className="text-[#9b9a97]">Channel</span>
+            <Select value={tag} onValueChange={(v) => setTag(v as Tag)}>
+              <SelectTrigger className="h-7 w-44 border-white/[0.06] bg-white/[0.03] text-[13px] text-[#e8e8e8]">
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
+              <SelectContent className="bg-[#252525] border-white/[0.06]">
+                {TAGS.map((t) => (
+                  <SelectItem key={t} value={t} className="text-[13px] text-[#e8e8e8] focus:bg-white/[0.04]">
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[#9b9a97]">Schedule</span>
-          <input
-            type="datetime-local"
-            value={scheduledAt}
-            onChange={(e) => setScheduledAt(e.target.value)}
-            className="h-7 rounded border border-white/[0.06] bg-white/[0.03] px-2 text-[13px] text-[#e8e8e8] outline-none focus:border-white/[0.12]"
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-[#9b9a97]">Schedule</span>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              className="h-7 rounded border border-white/[0.06] bg-white/[0.03] px-2 text-[13px] text-[#e8e8e8] outline-none focus:border-white/[0.12]"
+            />
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="rounded px-3 py-1 text-[13px] text-[#9b9a97] transition-colors hover:bg-white/[0.04] hover:text-[#e8e8e8]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving || !title.trim() || !tag}
+              className="rounded bg-[#2383e2] px-3.5 py-1 text-[13px] font-medium text-white transition-colors hover:bg-[#1b6ec2] disabled:opacity-40"
+            >
+              {saving ? "Saving..." : post ? "Save changes" : "Create post"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -134,23 +153,6 @@ export function PostForm({ post }: PostFormProps) {
       {/* Editor */}
       <BlockEditor initialMarkdown={post?.content} onChange={setContent} />
 
-      {/* Actions */}
-      <div className="mt-8 flex items-center gap-3 pl-[54px]">
-        <button
-          type="submit"
-          disabled={saving || !title.trim() || !tag}
-          className="rounded bg-[#2383e2] px-3.5 py-1.5 text-[13px] font-medium text-white transition-colors hover:bg-[#1b6ec2] disabled:opacity-40"
-        >
-          {saving ? "Saving..." : post ? "Save changes" : "Create post"}
-        </button>
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="rounded px-3.5 py-1.5 text-[13px] text-[#9b9a97] transition-colors hover:bg-white/[0.04] hover:text-[#e8e8e8]"
-        >
-          Cancel
-        </button>
-      </div>
     </form>
   );
 }
