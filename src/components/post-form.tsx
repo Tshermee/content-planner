@@ -157,7 +157,7 @@ export function PostForm({ post }: PostFormProps) {
       />
 
       {/* Editor */}
-      <BlockEditor initialMarkdown={post?.content} onChange={setContent} />
+      <BlockEditor initialContent={post?.content} onChange={setContent} />
 
     </form>
   );

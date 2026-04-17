@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
+import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import { useUser } from "@/lib/user-context";
 import type { Comment } from "@/lib/types";
+
+const BlockViewer = dynamic(
+  () => import("./block-viewer").then((m) => m.BlockViewer),
+  { ssr: false }
+);
 
 interface InlineCommentsProps {
   postId: string;
@@ -16,43 +20,7 @@ interface Selection {
   start: number;
   end: number;
   text: string;
-  top: number; // Y offset relative to content container
-}
-
-function injectHighlights(
-  content: string,
-  comments: Comment[],
-  activeCommentId: string | null
-): string {
-  if (comments.length === 0) return content;
-
-  const sorted = [...comments].sort(
-    (a, b) => a.selection_start - b.selection_start
-  );
-
-  let result = "";
-  let lastIndex = 0;
-
-  for (const comment of sorted) {
-    if (comment.selection_start < lastIndex) continue;
-    if (comment.selection_end > content.length) continue;
-
-    result += content.slice(lastIndex, comment.selection_start);
-
-    const isActive = comment.id === activeCommentId;
-    const cls = isActive
-      ? "comment-highlight comment-active"
-      : "comment-highlight";
-
-    result += `<mark class="${cls}" data-comment-id="${comment.id}">`;
-    result += content.slice(comment.selection_start, comment.selection_end);
-    result += "</mark>";
-
-    lastIndex = comment.selection_end;
-  }
-
-  result += content.slice(lastIndex);
-  return result;
+  top: number;
 }
 
 export function InlineComments({ postId, content }: InlineCommentsProps) {
@@ -61,7 +29,6 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [newComment, setNewComment] = useState("");
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
-  const [markPositions, setMarkPositions] = useState<Record<string, number>>({});
   const contentRef = useRef<HTMLDivElement>(null);
 
   const fetchComments = useCallback(async () => {
@@ -77,33 +44,6 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
-
-  // After render, measure the Y position of each <mark> element
-  useEffect(() => {
-    if (!contentRef.current || comments.length === 0) return;
-
-    const positions: Record<string, number> = {};
-    const container = contentRef.current;
-    const containerTop = container.getBoundingClientRect().top;
-
-    container.querySelectorAll("[data-comment-id]").forEach((el) => {
-      const id = el.getAttribute("data-comment-id");
-      if (id) {
-        positions[id] = el.getBoundingClientRect().top - containerTop;
-      }
-    });
-
-    setMarkPositions(positions);
-  }, [comments, activeCommentId, content]);
-
-  function handleContentClick(e: React.MouseEvent) {
-    const target = e.target as HTMLElement;
-    const mark = target.closest("[data-comment-id]");
-    if (mark) {
-      const id = mark.getAttribute("data-comment-id");
-      setActiveCommentId(activeCommentId === id ? null : id);
-    }
-  }
 
   function handleMouseUp() {
     const sel = window.getSelection();
@@ -156,19 +96,16 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
     fetchComments();
   }
 
-  const highlighted = injectHighlights(content, comments, activeCommentId);
-
-  // Stack comment cards so they don't overlap (min 8px gap)
+  // Stack comments so they don't overlap
   const sortedComments = [...comments].sort(
     (a, b) => a.selection_start - b.selection_start
   );
   const commentTops: Record<string, number> = {};
   let lastBottom = 0;
   for (const c of sortedComments) {
-    const naturalTop = markPositions[c.id] ?? 0;
-    const top = Math.max(naturalTop, lastBottom);
+    const top = Math.max(c.selection_start * 0.5, lastBottom); // approximate Y from offset
     commentTops[c.id] = top;
-    lastBottom = top + 80; // estimated card height + gap
+    lastBottom = top + 80;
   }
 
   return (
@@ -178,18 +115,14 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
         <div
           ref={contentRef}
           onMouseUp={handleMouseUp}
-          onClick={handleContentClick}
-          className="prose-notion min-h-[200px] cursor-text select-text"
+          className="cursor-text select-text"
         >
-          <ReactMarkdown rehypePlugins={[rehypeRaw]}>
-            {highlighted}
-          </ReactMarkdown>
+          <BlockViewer content={content} />
         </div>
       </div>
 
       {/* Right sidebar for comments */}
       <div className="relative hidden w-[280px] shrink-0 lg:block">
-        {/* Existing comments, positioned at the height of their highlight */}
         {sortedComments.map((c) => (
           <div
             key={c.id}
@@ -215,11 +148,14 @@ export function InlineComments({ postId, content }: InlineCommentsProps) {
                 Resolve
               </button>
             </div>
+            <div className="text-[11px] italic text-[#9b9a97]/50 truncate mb-1">
+              &ldquo;{c.selected_text}&rdquo;
+            </div>
             <p className="text-[#e8e8e8]/70 leading-relaxed">{c.body}</p>
           </div>
         ))}
 
-        {/* New comment input, positioned at selection height */}
+        {/* New comment input */}
         {selection && (
           <div
             className="absolute left-0 right-0 rounded-lg border border-[#2383e2]/30 bg-[#252525] p-3 shadow-xl z-10"

@@ -3,12 +3,13 @@
 import { useRef, useEffect } from "react";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
+import type { Block } from "@blocknote/core";
 import { supabase } from "@/lib/supabase";
 import "@blocknote/mantine/style.css";
 
 interface BlockEditorProps {
-  initialMarkdown?: string;
-  onChange?: (markdown: string) => void;
+  initialContent?: string; // JSON string of blocks
+  onChange?: (json: string) => void;
 }
 
 const MIME_TO_EXT: Record<string, string> = {
@@ -45,7 +46,6 @@ async function uploadFile(file: File): Promise<string> {
   return data.publicUrl;
 }
 
-// Extract all image URLs from HTML string
 function extractImageUrls(html: string): string[] {
   const urls: string[] = [];
   const regex = /<img[^>]+src=["']([^"']+)["']/gi;
@@ -58,7 +58,7 @@ function extractImageUrls(html: string): string[] {
   return urls;
 }
 
-export function BlockEditor({ initialMarkdown, onChange }: BlockEditorProps) {
+export function BlockEditor({ initialContent, onChange }: BlockEditorProps) {
   const editor = useCreateBlockNote({
     uploadFile,
   });
@@ -67,13 +67,19 @@ export function BlockEditor({ initialMarkdown, onChange }: BlockEditorProps) {
   onChangeRef.current = onChange;
 
   useEffect(() => {
-    if (initialized.current || !initialMarkdown) return;
+    if (initialized.current || !initialContent) return;
     initialized.current = true;
-    (async () => {
-      const blocks = await editor.tryParseMarkdownToBlocks(initialMarkdown);
+    try {
+      const blocks = JSON.parse(initialContent) as Block[];
       editor.replaceBlocks(editor.document, blocks);
-    })();
-  }, [editor, initialMarkdown]);
+    } catch {
+      // If content isn't JSON (legacy markdown), try parsing as markdown
+      (async () => {
+        const blocks = await editor.tryParseMarkdownToBlocks(initialContent);
+        editor.replaceBlocks(editor.document, blocks);
+      })();
+    }
+  }, [editor, initialContent]);
 
   // Intercept paste to handle images copied from webpages
   useEffect(() => {
@@ -84,26 +90,21 @@ export function BlockEditor({ initialMarkdown, onChange }: BlockEditorProps) {
       const ce = e as ClipboardEvent;
       if (!ce.clipboardData) return;
 
-      // If clipboard has an image file, let BlockNote handle it natively
       const items = Array.from(ce.clipboardData.items);
       const hasImageFile = items.some(
         (item) => item.type.startsWith("image/") && item.kind === "file"
       );
       if (hasImageFile) return;
 
-      // Check for HTML with <img> tags (copy image from web)
       const html = ce.clipboardData.getData("text/html");
       if (!html) return;
 
       const imageUrls = extractImageUrls(html);
       if (imageUrls.length === 0) return;
 
-      // Prevent BlockNote from inserting the alt text / HTML as text
       e.preventDefault();
       e.stopPropagation();
 
-      // Insert image blocks with the external URLs directly
-      // (no re-upload — CORS blocks most external fetches)
       try {
         const cursor = editor.getTextCursorPosition().block;
         for (const url of imageUrls) {
@@ -113,17 +114,15 @@ export function BlockEditor({ initialMarkdown, onChange }: BlockEditorProps) {
             "after"
           );
         }
-        // Trigger onChange
         if (onChangeRef.current) {
-          const md = editor.blocksToMarkdownLossy(editor.document);
-          onChangeRef.current(md);
+          const json = JSON.stringify(editor.document);
+          onChangeRef.current(json);
         }
       } catch (err) {
         console.error("Failed to insert pasted image:", err);
       }
     }
 
-    // Use capture phase to intercept before BlockNote's handler
     editorEl.addEventListener("paste", handlePaste, true);
     return () => editorEl.removeEventListener("paste", handlePaste, true);
   }, [editor]);
@@ -133,10 +132,10 @@ export function BlockEditor({ initialMarkdown, onChange }: BlockEditorProps) {
       <BlockNoteView
         editor={editor}
         theme="dark"
-        onChange={async () => {
+        onChange={() => {
           if (onChangeRef.current) {
-            const md = await editor.blocksToMarkdownLossy(editor.document);
-            onChangeRef.current(md);
+            const json = JSON.stringify(editor.document);
+            onChangeRef.current(json);
           }
         }}
       />
