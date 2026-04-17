@@ -36,13 +36,12 @@ export function ApprovalButtons({ postId }: { postId: string }) {
       .eq("post_id", postId);
 
     if (allApprovals) {
-      const allApproved =
-        allApprovals.length >= 2 && allApprovals.every((a) => a.approved);
+      const anyApproved = allApprovals.some((a) => a.approved);
       const anyRejected = allApprovals.some((a) => !a.approved);
-      const newStatus = allApproved
-        ? "ready"
-        : anyRejected
-          ? "rejected"
+      const newStatus = anyRejected
+        ? "rejected"
+        : anyApproved
+          ? "ready"
           : "draft";
       await supabase
         .from("posts")
