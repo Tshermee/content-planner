@@ -75,17 +75,23 @@ export function PostForm({ post }: PostFormProps) {
 
     if (post) {
       await supabase.from("posts").update(payload).eq("id", post.id);
-      router.push(`/posts?id=${post.id}`);
     } else {
       const { data } = await supabase
         .from("posts")
         .insert({ ...payload, status: "draft" })
         .select("id")
         .single();
-      if (data) router.push(`/posts?id=${data.id}`);
+      if (data) {
+        // Full navigation to avoid stale searchParams on same-route push
+        const base = window.location.pathname;
+        window.location.href = `${base}?id=${data.id}`;
+        return;
+      }
     }
 
-    setSaving(false);
+    // For updates, also do full navigation to get fresh data
+    window.location.href = `${window.location.pathname}?id=${post!.id}`;
+    return;
   }
 
   return (
