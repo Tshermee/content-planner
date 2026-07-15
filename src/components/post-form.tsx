@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { cn, countBlockNoteText } from "@/lib/utils";
 import { TAGS, type Tag, type Post } from "@/lib/types";
 import {
   Select,
@@ -59,6 +60,9 @@ export function PostForm({ post }: PostFormProps) {
     post?.scheduled_at ? post.scheduled_at.slice(0, 16) : ""
   );
   const [saving, setSaving] = useState(false);
+
+  const charCount = useMemo(() => countBlockNoteText(content), [content]);
+  const overLimit = charCount > 2000;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -158,6 +162,19 @@ export function PostForm({ post }: PostFormProps) {
 
       {/* Editor */}
       <BlockEditor initialContent={post?.content} onChange={setContent} />
+
+      {/* Always-visible character counter — turns red above 2000 */}
+      <div
+        aria-live="polite"
+        className={cn(
+          "fixed bottom-4 right-4 z-50 rounded-full border px-3 py-1 text-[12px] tabular-nums backdrop-blur-md transition-colors",
+          overLimit
+            ? "border-[#eb5757]/40 bg-[#3d2b2b]/80 text-[#eb5757]"
+            : "border-white/[0.06] bg-[#252525]/90 text-[#9b9a97]"
+        )}
+      >
+        {charCount.toLocaleString()} / 2,000 characters
+      </div>
 
     </form>
   );

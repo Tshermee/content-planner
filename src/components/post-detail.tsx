@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { cn, countBlockNoteText } from "@/lib/utils";
 import type { Post, Tag } from "@/lib/types";
 import { TagBadge } from "@/components/tag-badge";
 import { ApprovalButtons } from "@/components/approval-buttons";
@@ -71,6 +72,8 @@ export function PostDetail({ id }: { id: string }) {
   }
 
   const status = STATUS_STYLE[post.status] ?? STATUS_STYLE.draft;
+  const charCount = countBlockNoteText(post.content);
+  const overLimit = charCount > 2000;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
@@ -146,6 +149,18 @@ export function PostDetail({ id }: { id: string }) {
 
       {/* Content + comments sidebar */}
       <InlineComments postId={post.id} content={post.content} />
+
+      {/* Always-visible character counter — turns red above 2000 */}
+      <div
+        className={cn(
+          "fixed bottom-4 right-4 z-50 rounded-full border px-3 py-1 text-[12px] tabular-nums backdrop-blur-md transition-colors",
+          overLimit
+            ? "border-[#eb5757]/40 bg-[#3d2b2b]/80 text-[#eb5757]"
+            : "border-white/[0.06] bg-[#252525]/90 text-[#9b9a97]"
+        )}
+      >
+        {charCount.toLocaleString()} / 2,000 characters
+      </div>
     </div>
   );
 }
